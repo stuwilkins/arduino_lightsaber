@@ -5,15 +5,14 @@ CMSIS_DIR = $(ARDUINO_PACKAGE_DIR)/arduino/tools/CMSIS/4.5.0/CMSIS
 CMSIS_ATMEL_DIR = $(ARDUINO_PACKAGE_DIR)/arduino/tools/CMSIS-Atmel/1.2.0/CMSIS
 ARCHITECTURE = sam
 BOARD_TAG     = adafruit_feather_m4
+#BOARD_TAG     = adafruit_feather_m0
 CXXFLAGS_STD = -DARDUINO_ARCH_SAMD
 
 #ARDUINO_PORT = /dev/tty.usbmodem14501
 
-ARDUINO_LIBS += Audio-master.old SPI Adafruit_QSPI Adafruit_SPIFlash \
-			    Adafruit_NeoPixel_ZeroDMA Adafruit_NeoPixel Adafruit_ZeroDMA \
-				Adafruit_LIS3DH Wire Adafruit_Sensor Adafruit_ZeroI2S \
-				
-
+ARDUINO_LIBS += Audio SPI Adafruit_NeoPixel \
+				Adafruit_ZeroDMA \
+				Adafruit_LIS3DH Wire Adafruit_Sensor 
 
 VERSION=$(shell git describe --tags --always --dirty 2> /dev/null)
 

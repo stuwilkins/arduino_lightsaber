@@ -1,4 +1,3 @@
-#include <SPI.h>
 #include <Audio.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_Sensor.h>
@@ -18,10 +17,8 @@
 #define SWITCH_PIN                  9
 #define ERROR_PIN                   13
 
-Adafruit_QSPI_GD25Q flash;
 Adafruit_NeoPixel strip(NUM_PIXELS, STRIP_NEOPIXEL_PIN, NEO_GRB);
 Adafruit_NeoPixel neo_board(1, BOARD_NEOPIXEL_PIN, NEO_GRB);
-Adafruit_M0_Express_CircuitPython pythonfs(flash);
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
 AudioPlayMemory sound0;
@@ -81,9 +78,9 @@ void error(String error) {
 void setup() {
   // Initialize serial port and wait for it to open before continuing.
   Serial.begin(115200);
-  //while (!Serial) {
-  //  delay(100);
-  //}
+  while (!Serial) {
+    delay(100);
+  }
 
   Serial.println("Starting lightsaber ..................");
 
@@ -132,6 +129,8 @@ void setup() {
   {
     error("Unable to find Accelerometer ................");
   }
+
+  Serial.println("Setup Accelerometer Range ............");
   lis.setRange(LIS3DH_RANGE_4_G);
 
 
@@ -237,6 +236,7 @@ void loop() {
   {
     // The switch was pressed, sw_time is the press time
     sw_flag = 0;
+    Serial.print("Switch pressed for :");
     Serial.print(sw_time);
     Serial.println("");
 
@@ -286,6 +286,7 @@ void loop() {
     }
 
     mode_sel = 0;
+    sw_state = 0;
   }
 
   if(mode)
@@ -297,15 +298,15 @@ void loop() {
     acc += (int)pow(lis.z, 2);
     acc /= 100000;
 
-    if(acc > 1000 && acc <= 1300)
-    {
-      mode = 2;
-    } else if(acc > 1300){
+    if(acc > 1200){
       mode = 3;
+    } else if(acc > 1000) {
+      mode = 2;
     } else {
       mode = 1;
     }
 
+#ifdef DEBUG
     if(mode > 1)
     {
       Serial.print(acc);
@@ -318,6 +319,7 @@ void loop() {
       Serial.print(" \tZ: "); Serial.print(lis.z);
       Serial.println(" m/s^2 ");
     }
+#endif
 
     if((mode == 1) && (last_mode == 1))
     {
