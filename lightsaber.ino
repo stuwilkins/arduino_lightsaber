@@ -1,11 +1,14 @@
 #include <SPI.h>
-#include <Adafruit_SPIFlash.h>
-#include <Adafruit_SPIFlash_FatFs.h>
-#include <Adafruit_QSPI_GD25Q.h>
-#include <Adafruit_NeoPixel_ZeroDMA.h>
-#include <Adafruit_SleepyDog.h>
+#include <Audio.h>
+#include <Adafruit_NeoPixel.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LIS3DH.h>
+
+#include "AudioSampleIdle.h"
+#include "AudioSampleHit.h"
+#include "AudioSampleOn.h"
+#include "AudioSampleOff.h"
+#include "AudioSampleSwing.h"
 
 #define FLASH_TYPE                  SPIFLASHTYPE_W25Q16BV
 #define NUM_PIXELS                  84
@@ -20,6 +23,10 @@ Adafruit_NeoPixel strip(NUM_PIXELS, STRIP_NEOPIXEL_PIN, NEO_GRB);
 Adafruit_NeoPixel neo_board(1, BOARD_NEOPIXEL_PIN, NEO_GRB);
 Adafruit_M0_Express_CircuitPython pythonfs(flash);
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
+
+AudioPlayMemory sound0;
+AudioOutputAnalogStereo audioOutput;
+AudioConnection patchCord1(sound0, 0, audioOutput, 0);
 
 volatile int sw_state = 0;
 volatile int sw_flag = 0;
@@ -105,20 +112,9 @@ void setup() {
   strip.setBrightness(32);
   strip.show();
 
-
-  Serial.println("Setup Flash Memory ...................");
-  // Initialize flash library and check its chip ID.
-  if (!flash.begin()) {
-    error("Unable to initialize flash.");
-  }
-  flash.setFlashType(FLASH_TYPE);
-
-  if (!pythonfs.begin()) {
-    error("Failed to mount filesystem!");
-  }
-
-  Serial.println("Turn on prop wing ....................");
-  //digitalWrite(POWER_PIN, 1); 
+  // Setup Audio
+  Serial.println("Setup Audio ..........................");
+  AudioMemory(10);
 
   Serial.println("Setup Accelerometer ..................");
   int _c = 5;
@@ -150,7 +146,7 @@ void setup() {
   int n;
   for(n=0;n<NUM_PIXELS;n++)
   {
-    delay_lut[n] = 12 * cos(n * M_PI / (2 * NUM_PIXELS));
+    delay_lut[n] = 20 * cos(n * M_PI / (2 * NUM_PIXELS));
   }
 
   Serial.println("Setup Done.");
@@ -248,11 +244,13 @@ void loop() {
     {
       if(mode)
       {
+        sound0.play(AudioSampleOff);
         saber_power_off();
         digitalWrite(POWER_PIN, 0);
         mode = 0;
       } else {
         digitalWrite(POWER_PIN, 1);
+        sound0.play(AudioSampleOn);
         saber_power_on();
         mode = 1;
       }
@@ -299,10 +297,10 @@ void loop() {
     acc += (int)pow(lis.z, 2);
     acc /= 100000;
 
-    if(acc > 1000 && acc <= 2000)
+    if(acc > 1000 && acc <= 1300)
     {
       mode = 2;
-    } else if(acc > 2000){
+    } else if(acc > 1300){
       mode = 3;
     } else {
       mode = 1;
@@ -321,34 +319,41 @@ void loop() {
       Serial.println(" m/s^2 ");
     }
 
+    if((mode == 1) && (last_mode == 1))
+    {
+      if(!sound0.isPlaying())
+      {
+        sound0.play(AudioSampleIdle);
+      }
+    }
+
     if((mode == 1) && (last_mode != 1))
     {
-      // sing off
+      sound0.play(AudioSampleIdle);
       saber_idle();
     }
 
     if((mode == 2) && (last_mode == 1))
     {
       // swing
+      sound0.play(AudioSampleSwing);
       saber_swing_on();
     }
     
     if((mode == 3) && (last_mode == 1))
     {
-      // hit
+      sound0.play(AudioSampleHit);
       saber_hit_on();
     }
 
     if((mode == 2) && (last_mode == 3))
     {
-      // hit
+      sound0.play(AudioSampleSwing);
       saber_swing_on();
     }
 
   } else {
     digitalWrite(ERROR_PIN, 0);
-    int sleepMS = Watchdog.sleep();
-    digitalWrite(ERROR_PIN, 1);
   }
 
   last_mode = mode;

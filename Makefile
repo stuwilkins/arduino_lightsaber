@@ -9,9 +9,10 @@ CXXFLAGS_STD = -DARDUINO_ARCH_SAMD
 
 #ARDUINO_PORT = /dev/tty.usbmodem14501
 
-ARDUINO_LIBS += SPI Adafruit_QSPI Adafruit_SPIFlash Adafruit_ZeroI2S \
+ARDUINO_LIBS += Audio-master.old SPI Adafruit_QSPI Adafruit_SPIFlash \
 			    Adafruit_NeoPixel_ZeroDMA Adafruit_NeoPixel Adafruit_ZeroDMA \
-				Adafruit_SleepyDog Adafruit_LIS3DH Wire Adafruit_Sensor \
+				Adafruit_LIS3DH Wire Adafruit_Sensor Adafruit_ZeroI2S \
+				
 
 
 VERSION=$(shell git describe --tags --always --dirty 2> /dev/null)
