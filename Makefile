@@ -8,13 +8,13 @@ BOARD_TAG     = adafruit_feather_m4
 #BOARD_TAG     = adafruit_feather_m0
 CXXFLAGS_STD = -DARDUINO_ARCH_SAMD
 
-#ARDUINO_PORT = /dev/tty.usbmodem14501
-
 ARDUINO_LIBS += Audio SPI Adafruit_NeoPixel \
 				Adafruit_ZeroDMA \
-				Adafruit_LIS3DH Wire Adafruit_Sensor 
+				Adafruit_LIS3DH Wire Adafruit_Sensor \
+				Adafruit_SleepyDog
 
 VERSION=$(shell git describe --tags --always --dirty 2> /dev/null)
+$(info VAR="$(VERSION)") 
 
 include /usr/local/opt/arduino-mk/Sam.mk
 
@@ -22,11 +22,12 @@ include /usr/local/opt/arduino-mk/Sam.mk
 CXX = arm-none-eabi-g++
 
 
-.PHONY: upload
-upload: all
+.PHONY: test
+test: all
 	/usr/local/bin/ard-reset-arduino --zero $(DEVICE_PATH)
+	sleep 5
 	../BOSSA/bin/bossac --erase --write --verify --info --reset \
 		                --port=$(DEVICE_PATH) --offset=0x4000 \
 						build-$(BOARD_TAG)/arduino_lightsaber.bin
-	sleep 3
+	sleep 5
 	screen $(DEVICE_PATH) $(MONITOR_BAUDRATE)
